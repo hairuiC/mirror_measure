@@ -107,9 +107,11 @@ def main(fx_val:float, fy_val:float):
     print("重投影误差：", m_error)
     cv2.waitKey(0)
 
+def tanh(x):
+    return math.tanh(x)
 if __name__ == '__main__':
-    main(0.5,0.5)
-
+    # main(0.5,0.5)
+    a = tanh
 
 
 # cali = utils.calibration('test_img', 'new_img')

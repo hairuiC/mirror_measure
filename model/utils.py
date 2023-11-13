@@ -127,13 +127,50 @@ def calculate_lumitexel(img):
     grayImage = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     return grayImage
 
+class criterion():
+    def __init__(self, input, GT, weight, epsilon, labda):
+        self.input = input
+        self.GT = GT
+        self.weight = weight
+        self.epsilon = epsilon
+        self.labda = labda
+    def DAE_Loss(self):
+        loss_item1 = 0
+        loss_item2 = 0
+        # self.epsilon = 0.005
+        # labda = 0.3
+        for i in range(len(self.input)):
+            loss_item1 += math.sqrt(math.log2(1 + self.input[i]) - math.log2(1 + self.GT[i]))
+            loss_item2 += math.tanh((self.weight[i] - (1 - self.epsilon)) / self.epsilon) + math.tanh((-self.weight[i] + self.epsilon) / self.epsilon) + 2
+        return loss_item1 + self.labda * loss_item2
 
+def get_lightingPattern(model):
+    return model.encoder[0].weight, model.encoder[0].weight.grad
 
+def no_learningConv2d(kernel_size, stride, input):
+    kernel = np.ones((kernel_size, kernel_size))
+    # i = 0;
+    # j = 0;
+    # print(i)
+    H,W = input.shape
+    # print(len(input[0]))
+    # print(len(input[1]))
+    # print(H/stride, W/stride)
+    res = np.ones((int(H/stride), int(W/stride)))
+    for i in range(0, int(H), stride):
+        for j in range(0, int(W), stride):
+            temp_value = (sum(sum(np.multiply(kernel, input[i:i+stride, j:j+stride]))))/400
+            print(((i+stride)/stride)-1, ((j + stride)/stride)-1)
+            res[int(((i+stride)/stride)-1)][int(((j + stride)/stride)-1)] = temp_value
+    return res
 
-
-
-
-
+# from PIL import Image
+#
+# image1= Image.open("/home/jing/PycharmProjects/heliostat_measure/temp_trainimg/20_40_Display.jpg").convert('L')
+# image1 = np.array(image1)
+# print(image1.shape)
+# # img = Image.Image
+# a = no_learningConv2d(kernel_size=20, stride=20, input=image1)
 
 
 
