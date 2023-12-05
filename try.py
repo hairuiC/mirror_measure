@@ -1,7 +1,7 @@
 import math
 import numpy as np
 from model import utils
-
+import random
 # a = []
 # a = math.log(0.006, 10)
 # b = math.log(0.5, 10)
@@ -111,7 +111,14 @@ def tanh(x):
     return math.tanh(x)
 if __name__ == '__main__':
     # main(0.5,0.5)
-    a = tanh
+    # a = tanh
+    O = np.array([0.280551, 0.507936, 0.141849])
+    X = np.array([-0.222432, 0.519973, 0.146457])
+    Y = np.array([0.294847, 0.979378, 0.772472])
+    test_patter = np.random.rand(80,128)
+    utils.write_obj(test_patter, O, X, Y)
+
+
 
 
 # cali = utils.calibration('test_img', 'new_img')
