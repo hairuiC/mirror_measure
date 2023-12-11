@@ -26,12 +26,12 @@ def find_corners(img, chess_col, chess_row, sav_path, is_save=False):
     return ret, corners2
 
 
-def calibration(chess_path, chess_col, chess_row, fx_val=0.7, fy_val=0.7):
+def calibration(chess_path, obj_length, chess_col, chess_row, fx_val=1.0, fy_val=1.0, ):
     h = 0
     w = 0
     # 准备对象点
-    obj_p = np.zeros((8 * 6, 3), np.float32)
-    obj_p[:, :2] = np.mgrid[0:8, 0:6].T.reshape(-1, 2)
+    obj_p = np.zeros((9 * 6, 3), np.float32)
+    obj_p[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
     # 用于存储所有图像的队形点和图像点的数组
     obj_pts = []  # 真实世界的3d点
     img_pts = []  # 图像中的2d点
@@ -47,9 +47,10 @@ def calibration(chess_path, chess_col, chess_row, fx_val=0.7, fy_val=0.7):
         print(save_draw_chess_path + "写入成功")
         obj_pts.append(obj_p)
         img_pts.append(sub_corner)
-    ret, matrix, dist, r_vecs, t_vecs = cv2.calibrateCamera(obj_pts, img_pts, (h, w), None, None)
+    _, mtx, dist, _, _ = cv2.calibrateCamera(obj_pts, img_pts, (h, w), None, None)
     # print((h, w))
-    return ret, matrix, dist, r_vecs, t_vecs, obj_pts, img_pts
+    scale = obj_length / 40
+    return mtx, dist, scale
 
 
 def correction(img, matrix, dist):
@@ -110,13 +111,25 @@ def main(fx_val:float, fy_val:float):
 def tanh(x):
     return math.tanh(x)
 if __name__ == '__main__':
+    # mtx, dist, scale = calibration("/home/jing/PycharmProjects/heliostat_measure/cali_img", 9, 6, fx_val=0.7, fy_val=0.7)
+    # print(mtx, dist)
+
+    # write_obj
+    B = np.array([1.262660, 0.0117442, -0.013888])
+    C = np.array([1.277871, -0.002134, 1.471240])
+    vector_BC = C - B
+    obj_length = np.linalg.norm(vector_BC)
+
     # main(0.5,0.5)
     # a = tanh
     O = np.array([0.280551, 0.507936, 0.141849])
     X = np.array([-0.222432, 0.519973, 0.146457])
     Y = np.array([0.294847, 0.979378, 0.772472])
     test_patter = np.random.rand(80,128)
-    utils.write_obj(test_patter, O, X, Y)
+    test_patter[test_patter > 0.9] = 1
+    test_patter[test_patter <= 0.9] = 0
+    scale = obj_length / 40
+    utils.write_obj(test_patter, O, X, Y, scale)
 
 
 

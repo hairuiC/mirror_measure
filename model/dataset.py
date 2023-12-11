@@ -43,8 +43,8 @@ class Lumitexel_Dataset(Dataset):
         # image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         imageA = np.array(image)
         label = imageA
-        imageA = no_learningConv2d(kernel_size=20, stride=20, input=imageA)
-        label = no_learningConv2d(kernel_size=20, stride=20, input=label)
+        # imageA = no_learningConv2d(kernel_size=20, stride=20, input=imageA)
+        # label = no_learningConv2d(kernel_size=20, stride=20, input=label)
 
 
         if self.transform is not None:

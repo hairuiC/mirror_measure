@@ -179,46 +179,42 @@ def transformation(rotate, transfom, mat_B):
     return (np.dot(rotate, mat_B) + transfom)
 
 
-def write_obj(lighting_pattern, origin, x, y):
+def write_obj(lighting_pattern, origin, x, y, scale):
+    # scale = calculate_scale()
     render_mat = []
     # temp = []
     rotation, transform = img2world_transform(origin, x, y)
     X, Y = np.nonzero(lighting_pattern)
 
     for i in range(len(X)):
-        render_mat.append([X[i]*20, Y[i]*20, (X[i]+1)*20, (Y[i]+1)*20])
+        render_mat.append([X[i]*(20/2560)*scale*22.62, Y[i]*(20/1600)*scale*14.14, (X[i]+1)*(20/2560)*scale*22.62, (Y[i]+1)*(20/1600)*scale*14.14])
         # temp.append(((X+1)*20, (Y+1)*20))
         # render_mat.append(temp)
         # temp = []
-    thefile = open('test.obj', 'w')
-    faces = []
-    for j, items in enumerate(render_mat):
-        X0, Y0, X1, Y1 = items[0], items[1], items[2], items[3]
-        Z = 0
-        trans_vector1, trans_vector2, trans_vector3, trans_vector4 = (transformation(rotation, transform, np.array([X0, Y0, Z])),
-                                                                      transformation(rotation, transform, np.array([X1, Y0, Z])),
-                                                                      transformation(rotation, transform, np.array([X1, Y1, Z])),
-                                                                      transformation(rotation, transform, np.array([X0, Y1, Z])))
-        # new1 = transform(rotation, transform, np.array([X0, Y0, Z]))
-        thefile.write("v {0} {1} {2}\n".format(trans_vector1[0], trans_vector1[1], trans_vector1[2]))
-        thefile.write("v {0} {1} {2}\n".format(trans_vector2[0], trans_vector2[1], trans_vector2[2]))
-        thefile.write("v {0} {1} {2}\n".format(trans_vector3[0], trans_vector3[1], trans_vector3[2]))
-        thefile.write("v {0} {1} {2}\n".format(trans_vector4[0], trans_vector4[1], trans_vector4[2]))
-        faces.append("f {0} {1} {2} {3}".format(j*4+1, j*4+2, j*4+3, j*4+4))
-    for face in faces:
-        thefile.write(face)
+    with open('test.obj', 'w') as thefile:
+    # thefile = open('test.obj', 'w')
+        faces = []
+        for j, items in enumerate(render_mat):
+            X0, Y0, X1, Y1 = items[0], items[1], items[2], items[3]
+            Z = 0
+            trans_vector1, trans_vector2, trans_vector3, trans_vector4 = (transformation(rotation, transform, np.array([X0, Y0, Z])),
+                                                                          transformation(rotation, transform, np.array([X1, Y0, Z])),
+                                                                          transformation(rotation, transform, np.array([X1, Y1, Z])),
+                                                                          transformation(rotation, transform, np.array([X0, Y1, Z])))
+            # new1 = transform(rotation, transform, np.array([X0, Y0, Z]))
+            thefile.write("v {0} {1} {2}\n".format(trans_vector1[0], trans_vector1[1], trans_vector1[2]))
+            thefile.write("v {0} {1} {2}\n".format(trans_vector2[0], trans_vector2[1], trans_vector2[2]))
+            thefile.write("v {0} {1} {2}\n".format(trans_vector3[0], trans_vector3[1], trans_vector3[2]))
+            thefile.write("v {0} {1} {2}\n".format(trans_vector4[0], trans_vector4[1], trans_vector4[2]))
+            faces.append("f {0} {1} {2} {3}\n".format(j*4+4, j*4+3, j*4+2, j*4+1))
+        for face in faces:
+            thefile.write(face)
     thefile.close()
 
 
-
-
-
-    # render_mat = 1的部分发光
-
-
-
-    pass
-
+def calculate_scale(real_cm, obj_cm):
+    scale_objPerCM = obj_cm / real_cm
+    return scale_objPerCM
 # from PIL import Image
 #
 # image1= Image.open("/home/jing/PycharmProjects/heliostat_measure/temp_trainimg/20_40_Display.jpg").convert('L')
