@@ -27,7 +27,7 @@ def main(args=None):
 
     # parser.add_argument('--dataset', help='Dataset type, must be one of csv or coco.')
     # parser.add_argument('--coco_path', help='Path to COCO directory')
-    parser.add_argument('--img_path', help='Path to file containing training annotations (see readme)', default="/home/jing/PycharmProjects/heliostat_measure/temp_trainimg")
+    parser.add_argument('--img_path', help='Path to file containing training annotations (see readme)', default="/home/jing/Documents/new1")
     # parser.add_argument('--csv_classes', help='Path to file containing class list (see readme)')
     parser.add_argument('--test_path', help='Path to file containing validation annotations (optional, see readme)')
 
@@ -43,6 +43,9 @@ def main(args=None):
     #---------------------------读取数据集
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     data_transforms = transforms.ToTensor()
+
+
+
 
 
     dataset_train = Lumitexel_Dataset(
@@ -83,7 +86,10 @@ def main(args=None):
         for iter_num, data in enumerate(dataLoader):
             imgs, _ = data
             optimizer.zero_grad()
+            print('inputshape:', imgs.shape)
             outputs = rough_model.forward(imgs)
+            print('//////////////', outputs.shape)
+            print(outputs)
             weight = rough_model.parameters()
             criterion = model.utils.criterion(input=outputs, GT=imgs, epsilon=0.005, labda=0.3, weight=weight)
             loss = criterion.DAE_Loss()

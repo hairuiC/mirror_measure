@@ -15,7 +15,7 @@ class Lumi_model(nn.Module):
             # nn.Conv2d(in_channels=1, out_channels=1, kernel_size=20, stride=20),
             # nn.BatchNorm2d(10240),
             # nn.ReLU(inplace=True),
-            nn.Conv2d(in_channels=1, out_channels=self.n_lightPattern, kernel_size=(80, 128)),
+            nn.Conv2d(in_channels=1, out_channels=self.n_lightPattern, kernel_size=(3223, 2050)),
             nn.BatchNorm2d(self.n_lightPattern),
             nn.Dropout(0.4),
             nn.ReLU(inplace=True),
@@ -25,7 +25,7 @@ class Lumi_model(nn.Module):
         )
 
         self.decoder = nn.Sequential(
-            nn.Linear(in_features=1521*2433*self.n_lightPattern, out_features=128),
+            nn.Linear(in_features=3144*1923*2, out_features=128),
             nn.BatchNorm1d(128),
 
             nn.LeakyReLU(),
@@ -64,7 +64,7 @@ class Lumi_model(nn.Module):
         print('=================', input.shape)
         input = input.to(torch.float32)
         input = self.encoder(input)
-        print('-------------------', input.shape)
+        print('-------------------encodershape', input.shape)
         input = input.view(-1)
         input = input.unsqueeze(0)
         input = self.decoder(input)

@@ -7,6 +7,8 @@ import numpy
 import os
 from torch import nn
 from PIL import Image
+import glob
+import xml.etree.ElementTree as ET
 # import utils
 def no_learningConv2d(kernel_size, stride, input):
     kernel = np.ones((kernel_size, kernel_size))
@@ -24,6 +26,34 @@ def no_learningConv2d(kernel_size, stride, input):
             # print(((i+stride)/stride)-1, ((j + stride)/stride)-1)
             res[int(((i+stride)/stride)-1)][int(((j + stride)/stride)-1)] = temp_value
     return res
+
+
+
+# 假设lumitexel(单独最大光照情况的渲染图)已经存储在my_scene/render_lumitexel中
+def create_trainingset(N, lumi_filepath):
+    # beckmann 方程重建
+    # 1. 随机选择空间点p(坐标变换)
+    # 2. 以beckmann方程为基准随机生成alpha
+    # 2. p点的像素值取出作为lumitexel
+    filenames = glob.glob(lumi_filepath)
+    width, height = (cv2.imread(filenames[0])).shape
+    train_set = []
+    for i in range(N):
+        lumitexel = []
+        for files in filenames:
+            img = cv2.imread(files)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            img_array = np.array(img)
+            [X, Y] = np.random.uniform(0, 1, 2)
+            X = int(X * width)
+            Y = int(Y * height)
+            lumitexel.append(img_array[X, Y])
+        train_set.append(lumitexel)
+    return train_set
+
+
+
+
 class Lumitexel_Dataset(Dataset):
     def __init__(self, img_path, split, transform):
         self.img_path = img_path

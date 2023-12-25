@@ -1,4 +1,6 @@
 import math
+import os
+
 import numpy as np
 from model import utils
 import random
@@ -26,10 +28,11 @@ def find_corners(img, chess_col, chess_row, sav_path, is_save=False):
     return ret, corners2
 
 
-def calibration(chess_path, obj_length, chess_col, chess_row, fx_val=1.0, fy_val=1.0, ):
+def calibration(chess_path, chess_col, chess_row, fx_val=1.0, fy_val=1.0, ):
     h = 0
     w = 0
     # 准备对象点
+    dic_distortion = {}
     obj_p = np.zeros((9 * 6, 3), np.float32)
     obj_p[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
     # 用于存储所有图像的队形点和图像点的数组
@@ -47,13 +50,26 @@ def calibration(chess_path, obj_length, chess_col, chess_row, fx_val=1.0, fy_val
         print(save_draw_chess_path + "写入成功")
         obj_pts.append(obj_p)
         img_pts.append(sub_corner)
-    _, mtx, dist, _, _ = cv2.calibrateCamera(obj_pts, img_pts, (h, w), None, None)
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts, (h, w), None, None)
     # print((h, w))
-    scale = obj_length / 40
-    return mtx, dist, scale
 
 
-def correction(img, matrix, dist):
+    dic_distortion['ret'] = ret
+    dic_distortion['mtx'] = mtx
+    dic_distortion['dist'] = dist
+    dic_distortion['rvecs'] = rvecs
+    dic_distortion['tvecs'] = tvecs
+
+    save_para(dic_distortion)
+
+    return dic_distortion
+
+
+def correction(img, dic):
+    # 输入path/dic
+    # 读取mtx, rst 进行计算后写矫正图像
+    matrix = dic["mtx"]
+    dist = dic["dist"]
     (h1, w1) = img.shape[:2]
     # 对参数做处理，使得最后的输出的矫正图像去掉不必要的边缘。
     newcameramtx, roi = cv2.getOptimalNewCameraMatrix(matrix, dist, (w1, h1), 1, (w1, h1))
@@ -74,10 +90,10 @@ def mean_error(obj_pts, img_pts, matrix, dist, r_vecs, t_vecs):
     return mean_error / len(obj_pts)
 
 
-def save_para(ret, matrix, dist, r_vecs, t_vecs):
+def save_para(dic):
     # 保存参数
-    camera_para_dict = {"ret": ret, "matrix": matrix, "dist": dist, "r_vecs": r_vecs, "t_vecs": t_vecs}
-    np.save("camera_para_dict.npy", camera_para_dict)
+    # camera_para_dict = {"ret": ret, "matrix": matrix, "dist": dist, "r_vecs": r_vecs, "t_vecs": t_vecs}
+    np.save("camera_para_dict.npy", dic)
 
 def load_para(para_path):
     para = np.load(para_path, allow_pickle=True).item()
@@ -94,19 +110,24 @@ def load_para(para_path):
 def main(fx_val:float, fy_val:float):
     # ###################
     chess_path = 'cali_img'
-    test_img_path = 'test_img'
+    test_img_path = '/home/jing/Documents/files'
+    save_path = 'home/jing/Documents/dist_imgs'
+    img_list = []
+    for img_name in os.listdir(test_img_path):
+        img_list.append(img_name)
     # ###################
-    ret, matrix, dist, r_vecs, t_vecs, obj_pts, img_pts = calibration(chess_path, 9, 6,
-                                                                      fx_val,fy_val)
-    save_para(ret, matrix, dist, r_vecs, t_vecs)
-    test_img = cv2.imread(test_img_path)
-    test_img = cv2.resize(test_img, None, fx=fx_val, fy=fy_val)
-    correction_test_img = correction(test_img, matrix, dist)
-    cv2.imshow("test_img", test_img)
-    cv2.imshow("correction_test_img", correction_test_img)
-    m_error = mean_error(obj_pts, img_pts, matrix, dist, r_vecs, t_vecs)
-    print("重投影误差：", m_error)
-    cv2.waitKey(0)
+    dic_distortion= calibration(chess_path, 9, 6, fx_val,fy_val)
+    # save_para(ret, matrix, dist, r_vecs, t_vecs)
+    for test_imgname in img_list:
+        test_img = cv2.imread(test_img_path + os.sep + test_imgname)
+        test_img = cv2.resize(test_img, None, fx=fx_val, fy=fy_val)
+        correction_test_img = correction(test_img, dic_distortion)
+        cv2.imwrite(save_path+os.sep+test_imgname, correction_test_img)
+    # cv2.imshow("test_img", test_img)
+    # cv2.imshow("correction_test_img", correction_test_img)
+    # m_error = mean_error(obj_pts, img_pts, matrix, dist, r_vecs, t_vecs)
+    # print("重投影误差：", m_error)
+    # cv2.waitKey(0)
 
 def tanh(x):
     return math.tanh(x)
@@ -126,10 +147,18 @@ if __name__ == '__main__':
     X = np.array([-0.222432, 0.519973, 0.146457])
     Y = np.array([0.294847, 0.979378, 0.772472])
     test_patter = np.random.rand(80,128)
-    test_patter[test_patter > 0.9] = 1
-    test_patter[test_patter <= 0.9] = 0
-    scale = obj_length / 40
-    utils.write_obj(test_patter, O, X, Y, scale)
+    file = open("/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene_back.xml", 'w').close()
+    utils.copy_file("/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene.xml", "/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene_back.xml")
+    for i in range(5):
+        new_pattern = np.where((test_patter < (i+1)*0.2) & (test_patter > i*0.2),  np.ones_like(test_patter), np.zeros_like(test_patter))
+        scale = obj_length / 40
+        utils.write_obj(new_pattern, O, X, Y, scale, i)
+    utils.del_empty("/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene_back.xml", "/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene_back_new.xml")
+
+    # test_patter[test_patter > 0.9] = 1
+    # test_patter[test_patter <= 0.9] = 0
+    # scale = obj_length / 40
+    # utils.write_obj(test_patter, O, X, Y, scale)
 
 
 
