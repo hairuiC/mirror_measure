@@ -1,6 +1,6 @@
 <scene version="1.0.0">
     <default name="spp" value="128"/>
-    <default name="res" value="2048"/>
+    <default name="res" value="1024"/>
     <default name="max_depth" value="2"/>
     <!-- <default name="integrator" value="path"/> -->
 
@@ -23,8 +23,8 @@
             <integer name="sample_count" value="$spp"/>
         </sampler>
         <film type="hdrfilm">
-			<integer name="width" value="5184"/>
-			<integer name="height" value="3456"/>
+			<integer name="width" value="1024"/>
+			<integer name="height" value="1024"/>
             <rfilter type="tent"/>
             <string name="pixel_format" value="rgb"/>
             <string name="component_format" value="float32"/>
@@ -48,8 +48,8 @@
     <bsdf type="roughconductor" id="mirror2">
         <string name="material" value="Al"/>
         <string name="distribution" value="beckmann"/>
-        <float name="alpha_u" value="0.0005"/>
-        <float name="alpha_v" value="0.0005"/>
+        <float name="alpha_u" value="0.005"/>
+        <float name="alpha_v" value="0.005"/>
     </bsdf>
 
     <bsdf type="diffuse" id="white">
@@ -65,13 +65,13 @@
         <rgb name="radiance" value="0.1"/>
     </emitter> -->
     <shape type="obj" id="light">
-        <string name="filename" value="/home/jing/PycharmProjects/heliostat_measure/my_scene/test1.obj"/>
+        <string name="filename" value="/home/jing/PycharmProjects/heliostat_measure/my_scene/pad.obj"/>
         <transform name="to_world">
             <translate x="0" y="-0.01" z="0"/>
         </transform>
         <ref id="white"/>
         <emitter type="area">
-            <rgb name="radiance" value="1047"/>
+            <rgb name="radiance" value="100"/>
         </emitter>
     </shape>
 

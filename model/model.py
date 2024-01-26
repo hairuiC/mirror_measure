@@ -15,7 +15,7 @@ class Lumi_model(nn.Module):
             # nn.Conv2d(in_channels=1, out_channels=1, kernel_size=20, stride=20),
             # nn.BatchNorm2d(10240),
             # nn.ReLU(inplace=True),
-            nn.Conv2d(in_channels=1, out_channels=self.n_lightPattern, kernel_size=(3223, 2050)),
+            nn.Conv1d(in_channels=1, out_channels=self.n_lightPattern, kernel_size=10240),
             nn.BatchNorm2d(self.n_lightPattern),
             nn.Dropout(0.4),
             nn.ReLU(inplace=True),
@@ -25,7 +25,7 @@ class Lumi_model(nn.Module):
         )
 
         self.decoder = nn.Sequential(
-            nn.Linear(in_features=3144*1923*2, out_features=128),
+            nn.Linear(in_features=self.n_lightPattern, out_features=128),
             nn.BatchNorm1d(128),
 
             nn.LeakyReLU(),
