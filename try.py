@@ -41,27 +41,28 @@ def tanh(x):
 if __name__ == '__main__':
     # mtx, dist, scale = calibration("/home/jing/PycharmProjects/heliostat_measure/cali_img", 9, 6, fx_val=0.7, fy_val=0.7)
     # print(mtx, dist)
-
+    main(0.7, 0.7)
     # write_obj
-    B = np.array([1.262660, 0.0117442, -0.013888])
-    C = np.array([1.277871, -0.002134, 1.471240])
-    vector_BC = C - B
-    obj_length = np.linalg.norm(vector_BC)
-
-    # main(0.5,0.5)
-    # a = tanh
-    O = np.array([0.280551, 0.507936, 0.141849])
-    X = np.array([-0.222432, 0.519973, 0.146457])
-    Y = np.array([0.294847, 0.979378, 0.772472])
-    test_patter = np.random.rand(80,128)
-    file = open("/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene_back.xml", 'w').close()
-    utils.copy_file("/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene.xml", "/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene_back.xml")
-    for i in range(5):
-        new_pattern = np.where((test_patter < (i+1)*0.2) & (test_patter > i*0.2),  np.ones_like(test_patter), np.zeros_like(test_patter))
-        scale = obj_length / 40
-        utils.write_obj(new_pattern, O, X, Y, scale, i)
-    utils.del_empty("/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene_back.xml", "/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene_back_new.xml")
-
+    # ----------------------------------------------------------- temp
+    # B = np.array([1.262660, 0.0117442, -0.013888])
+    # C = np.array([1.277871, -0.002134, 1.471240])
+    # vector_BC = C - B
+    # obj_length = np.linalg.norm(vector_BC)
+    #
+    # # main(0.5,0.5)
+    # # a = tanh
+    # O = np.array([0.280551, 0.507936, 0.141849])
+    # X = np.array([-0.222432, 0.519973, 0.146457])
+    # Y = np.array([0.294847, 0.979378, 0.772472])
+    # test_patter = np.random.rand(80,128)
+    # file = open("/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene_back.xml", 'w').close()
+    # utils.copy_file("/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene.xml", "/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene_back.xml")
+    # for i in range(5):
+    #     new_pattern = np.where((test_patter < (i+1)*0.2) & (test_patter > i*0.2),  np.ones_like(test_patter), np.zeros_like(test_patter))
+    #     scale = obj_length / 40
+    #     utils.write_obj(new_pattern, O, X, Y, scale, i)
+    # utils.del_empty("/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene_back.xml", "/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene_back_new.xml")
+    #--------------------------------------------------------------- temp end
     # test_patter[test_patter > 0.9] = 1
     # test_patter[test_patter <= 0.9] = 0
     # scale = obj_length / 40

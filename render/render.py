@@ -13,7 +13,7 @@ def render(scene_path, save_path):
     scene = mt.load_file(scene_path)
     image = mt.render(scene, spp=256)
     mt.util.write_bitmap(save_path, image)
-render("/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene.xml", "/home/jing/PycharmProjects/heliostat_measure/my_scene/test_new.jpg")
+# render("/home/jing/PycharmProjects/heliostat_measure/my_scene/my_scene.xml", "/home/jing/PycharmProjects/heliostat_measure/my_scene/test_new.jpg")
 def get_random_alpha(low_broad, high_broad, num):
     y = np.logspace(low_broad, high_broad, num)
     return y
@@ -25,12 +25,6 @@ def get_random_pos(num, board_x, board_y):
     # x = np.random.rand(board_x[0], board_x[1], num)
     # y = np.random.rand(board_y[0], board_y[1], num)
     return x, y
-def render_sub_heiostat(alpha, pos):
-    # 以pos为中心渲染一个长宽为20的微表面,返回pos点的像素值
-    # 步骤1 生成pos为中心的一个微表面的obj
-    # 步骤2 编辑xml文件,粗糙度为alpha
-    # 步骤3 调取render函数进行渲染，返回pos的像素值
-    scale = model.utils.get_scale()
 def get_singleLight():
     scale = model.utils.get_scale()
 
@@ -61,7 +55,8 @@ def get_singleLight():
                 thefile.write("f {0} {1} {2} {3}\n".format(4, 3, 2, 1))
             count += 1
 
-def get_train_lumi(img_path, pos, calipath="camera_para_dict.npy"):
+def get_train_lumi(img_path, pos, calipath="/home/jing/PycharmProjects/heliostat_measure/camera_para_dict.npy"):
+    #
     # pos是世界坐标
     # 需要内外参进行转换
     img = cv2.imread(img_path)
@@ -87,7 +82,7 @@ def change_alpha_xml(path, alpha, index):
 
     shape_node = get_node_by_keyvalue(find_nodes(tree, "shape"), {"id": "heliostat"})
     path_node = get_node_by_keyvalue(find_nodes(shape_node[0], "string"), {"name": "filename"})
-    path_node[0].set("value", "/home/jing/PycharmProjects/heliostat_measure/my_scene/train_scene/random_point_{}.obj".format(index))
+    path_node[0].set("value", "/home/jing/PycharmProjects/heliostat_measure/my_scene/train_scene/random_point/random_point_{}.obj".format(index))
     tree.write(path)
 
 def change_light_xml(path, index):
@@ -129,7 +124,7 @@ def main():
         # 生成100个渲染结果
         # 步骤：先随机取点，生成微定日镜，写入obj文件，obj文件+粗糙度
         # 循环singlelight里所有光源，每次使用一个光源照射obj文件(先obj文件循环，再xml文件光源修改循环)
-        file1 = open("/home/jing/PycharmProjects/heliostat_measure/my_scene/train_scene/random_point_{}.obj".format(i), 'w').close()
+        # file1 = open("/home/jing/PycharmProjects/heliostat_measure/my_scene/train_scene/random_point_{}.obj".format(i), 'w').close()
         # file2 = open("/home/jing/PycharmProjects/heliostat_measure/my_scene/train_scene/random_xml.xml", 'w').close()
 
         alpha_temp, x, y = alpha[i], x_list[0, i], y_list[0, i]
@@ -150,18 +145,19 @@ def main():
                                                   transformation(Rotation, Translate, right_bot),
                                                   transformation(Rotation, Translate, left_bot)) # 世界坐标系下的微表面4点坐标坐标
 
-        with open("/home/jing/PycharmProjects/heliostat_measure/my_scene/train_scene/random_point_{}.obj".format(i), 'w') as thefile:
+        with open("/home/jing/PycharmProjects/heliostat_measure/my_scene/train_scene/random_point/random_point_{}.obj".format(i), 'w') as thefile:
             thefile.write("v {0} {1} {2}\n".format(left_up[0], left_up[1], left_up[2]))
             thefile.write("v {0} {1} {2}\n".format(right_up[0], right_up[1], right_up[2]))
             thefile.write("v {0} {1} {2}\n".format(right_bot[0], right_bot[1], right_bot[2]))
             thefile.write("v {0} {1} {2}\n".format(left_bot[0], left_bot[1], left_bot[2]))
             thefile.write("f {0} {1} {2} {3}\n".format(1, 2, 3, 4))
             thefile.flush()
+        thefile.close()
         change_alpha_xml(path="/home/jing/PycharmProjects/heliostat_measure/my_scene/train_scene/train_file_test.xml", alpha=alpha_temp, index=i)
-        train_texel = []
+        # train_texel = []
         for j in range(10240):
             change_light_xml(path="/home/jing/PycharmProjects/heliostat_measure/my_scene/train_scene/train_file_test.xml", index=j)
-            # obj文件生成结束, xml修改结束，渲染
+            # obj文件生成结束, xml修改结束，开始渲染
             render(scene_path="/home/jing/PycharmProjects/heliostat_measure/my_scene/train_scene/train_file_test.xml",
                    save_path="/home/jing/PycharmProjects/heliostat_measure/my_scene/train_scene/train_render/temp_render.png")
             lumitexel = get_train_lumi("/home/jing/PycharmProjects/heliostat_measure/my_scene/train_scene/train_render/temp_render.png", world_pos)
@@ -169,6 +165,6 @@ def main():
     # 100*10240的生成结束，存储起来
     np.save("/home/jing/PycharmProjects/heliostat_measure/my_scene/train_scene/train_file.npy", train_texel)
 
-# main()
+main()
 
 # render('', '')

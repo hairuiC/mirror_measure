@@ -384,8 +384,16 @@ def calibration(chess_path, chess_col, chess_row, fx_val=1.0, fy_val=1.0, ):
         print(save_draw_chess_path + "写入成功")
         obj_pts.append(obj_p)
         img_pts.append(sub_corner)
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts, (h, w), None, None)
+    obj_pts = np.array(obj_pts)
+    img_pts = np.array(img_pts)
+    _, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts, (h, w), None, None)
     # print((h, w))
+
+    # _, rvec, tvec = cv2.solvePnP(obj_pts, img_pts, mtx, dist)
+    r_mtx = cv2.Rodrigues(rvecs)[0]
+    # rt = np.array([[r_mtx[0][0], r_mtx[0][1], tvec[0]],
+    #                [],
+    #                []])
 
 
     dic_distortion['ret'] = ret
@@ -397,6 +405,38 @@ def calibration(chess_path, chess_col, chess_row, fx_val=1.0, fy_val=1.0, ):
     save_para(dic_distortion)
 
     return dic_distortion
+
+def cal_rt(mtx, dist, chess_path):
+    obj_p = np.zeros((9 * 6, 3), np.float32)
+    obj_p[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
+    objp = 2.6 * obj_p
+
+    obj_points = []
+    img_points = []
+
+    obj_points = objp
+
+    get_path = chess_path + "/*.jpg"
+    images = glob.glob(get_path)
+    for img in images:
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        ret, corners = cv2.drawChessboardCorners(gray, (9, 6), None)
+        if ret:
+            img_points = np.array(corners)
+            cv2.drawChessboardCorners(gray, (9, 6), corners, ret)
+            _, rvec, tvec = cv2.solvePnP(obj_points, img_points, mtx, dist)
+            r_mtx = cv2.Rodrigues(rvec)[0]
+
+            rt = np.array([[r_mtx[0][0], r_mtx[0][1], tvec[0]],
+                           [r_mtx[1][0], r_mtx[1][1], tvec[1]],
+                           [r_mtx[2][0], r_mtx[2][1], tvec[2]]], dtype=np.float)
+
+            rt_i = np.linalg.inv(rt)
+            pi_i = np.linalg.inv(mtx)
+
+
+
+
 
 
 def correction(img, dic):
@@ -432,10 +472,10 @@ def save_para(dic):
 def load_para(para_path):
     para = np.load(para_path, allow_pickle=True).item()
     ret = para["ret"]
-    matrix = para["matrix"]
+    matrix = para["mtx"]
     dist = para["dist"]
-    r_vecs = para["r_vecs"]
-    t_vecs = para["t_vecs"]
+    r_vecs = para["rvecs"]
+    t_vecs = para["tvecs"]
 
     return ret, matrix, dist, r_vecs, t_vecs
 
