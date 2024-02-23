@@ -387,10 +387,13 @@ def calibration(chess_path, chess_col, chess_row, fx_val=1.0, fy_val=1.0, ):
     obj_pts = np.array(obj_pts)
     img_pts = np.array(img_pts)
     _, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts, (h, w), None, None)
-    # print((h, w))
+    print(mtx)
 
     # _, rvec, tvec = cv2.solvePnP(obj_pts, img_pts, mtx, dist)
-    r_mtx = cv2.Rodrigues(rvecs)[0]
+    r_mtx = cv2.Rodrigues(rvecs[0])[0]
+    t_mtx = tvecs[0]
+    print(r_mtx)
+    print(tvecs[0])
     # rt = np.array([[r_mtx[0][0], r_mtx[0][1], tvec[0]],
     #                [],
     #                []])
@@ -399,40 +402,40 @@ def calibration(chess_path, chess_col, chess_row, fx_val=1.0, fy_val=1.0, ):
     dic_distortion['ret'] = ret
     dic_distortion['mtx'] = mtx
     dic_distortion['dist'] = dist
-    dic_distortion['rvecs'] = rvecs
-    dic_distortion['tvecs'] = tvecs
+    dic_distortion['r_mtx'] = r_mtx
+    dic_distortion['t_mtx'] = t_mtx
 
     save_para(dic_distortion)
 
     return dic_distortion
 
-def cal_rt(mtx, dist, chess_path):
-    obj_p = np.zeros((9 * 6, 3), np.float32)
-    obj_p[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
-    objp = 2.6 * obj_p
-
-    obj_points = []
-    img_points = []
-
-    obj_points = objp
-
-    get_path = chess_path + "/*.jpg"
-    images = glob.glob(get_path)
-    for img in images:
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        ret, corners = cv2.drawChessboardCorners(gray, (9, 6), None)
-        if ret:
-            img_points = np.array(corners)
-            cv2.drawChessboardCorners(gray, (9, 6), corners, ret)
-            _, rvec, tvec = cv2.solvePnP(obj_points, img_points, mtx, dist)
-            r_mtx = cv2.Rodrigues(rvec)[0]
-
-            rt = np.array([[r_mtx[0][0], r_mtx[0][1], tvec[0]],
-                           [r_mtx[1][0], r_mtx[1][1], tvec[1]],
-                           [r_mtx[2][0], r_mtx[2][1], tvec[2]]], dtype=np.float)
-
-            rt_i = np.linalg.inv(rt)
-            pi_i = np.linalg.inv(mtx)
+# def cal_rt(mtx, dist, chess_path):
+#     obj_p = np.zeros((9 * 6, 3), np.float32)
+#     obj_p[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
+#     objp = 2.6 * obj_p
+#
+#     obj_points = []
+#     img_points = []
+#
+#     obj_points = objp
+#
+#     get_path = chess_path + "/*.jpg"
+#     images = glob.glob(get_path)
+#     for img in images:
+#         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#         ret, corners = cv2.drawChessboardCorners(gray, (9, 6), None)
+#         if ret:
+#             img_points = np.array(corners)
+#             cv2.drawChessboardCorners(gray, (9, 6), corners, ret)
+#             _, rvec, tvec = cv2.solvePnP(obj_points, img_points, mtx, dist)
+#             r_mtx = cv2.Rodrigues(rvec)[0]
+#
+#             rt = np.array([[r_mtx[0][0], r_mtx[0][1], tvec[0]],
+#                            [r_mtx[1][0], r_mtx[1][1], tvec[1]],
+#                            [r_mtx[2][0], r_mtx[2][1], tvec[2]]], dtype=np.float)
+#
+#             rt_i = np.linalg.inv(rt)
+#             pi_i = np.linalg.inv(mtx)
 
 
 
@@ -474,20 +477,37 @@ def load_para(para_path):
     ret = para["ret"]
     matrix = para["mtx"]
     dist = para["dist"]
-    r_vecs = para["rvecs"]
-    t_vecs = para["tvecs"]
+    r_mtx = para["r_mtx"]
+    t_mtx = para["t_mtx"]
 
-    return ret, matrix, dist, r_vecs, t_vecs
+    return ret, matrix, dist, r_mtx, t_mtx
 
-def xyz2uv(matrix, r_vecs, t_vecs, w_pos):
-    last_row = np.array([0, 0, 0, 1])
-    out_mat = np.hstack((r_vecs, t_vecs))
-    out_mat = np.vstack((out_mat, last_row))
+def xyz2uv(mtx, r_mtx, t_mtx, world_pos):
+    focal_x = mtx[0][0]
+    focal_y = mtx[1][1]
 
-    w_pos = np.hstack((w_pos, [1]))
-    camera_coor = w_pos * w_pos
-    Z_c = float(camera_coor[2])
-    img_coor = matrix*(camera_coor /Z_c)
+    offset_x = mtx[0][2]
+    offset_y = mtx[1][2]
+    # world_p = np.array([x, y, z, 0])
+    camera_p = np.dot(world_pos - t_mtx, r_mtx)
+    x, y, z = camera_p[0], camera_p[1], camera_p[2]
 
-    u,v = img_coor[0], img_coor[1]
-    return u, v
+    new_x = -x * focal_x/z + offset_x
+    new_y = y * focal_y/z+offset_y
+
+    screen_p = np.array([new_x, new_y])
+
+    return screen_p
+
+# def xyz2uv(matrix, r_vecs, t_vecs, w_pos):
+#     last_row = np.array([0, 0, 0, 1])
+#     out_mat = np.hstack((r_vecs, t_vecs))
+#     out_mat = np.vstack((out_mat, last_row))
+# 
+#     w_pos = np.hstack((w_pos, [1]))
+#     camera_coor = w_pos * w_pos
+#     Z_c = float(camera_coor[2])
+#     img_coor = matrix*(camera_coor /Z_c)
+# 
+#     u,v = img_coor[0], img_coor[1]
+#     return u, v
